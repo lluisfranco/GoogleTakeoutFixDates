@@ -196,10 +196,10 @@ namespace GoogleTakeoutFixDates
             };
             noDateAlbum.Photos.AddRange(GoogleTakeoutParser.PhotoAlbums.SelectMany(
                 a => a.Photos).Where(p => !p.Date.HasValue));
-            ExportAlbum(exportPhotosMainFolder, noDateAlbum);
+            ExportAlbum(exportPhotosMainFolder, noDateAlbum, true);
         }
 
-        private void ExportAlbum(DirectoryInfo exportPhotosMainFolder, PhotosAlbumNode photoAlbum)
+        private void ExportAlbum(DirectoryInfo exportPhotosMainFolder, PhotosAlbumNode photoAlbum, bool forceExport = false)
         {
             int i = 0;
             try
@@ -207,7 +207,7 @@ namespace GoogleTakeoutFixDates
                 var albumName = photoAlbum.Name.ReplaceInvalidCharsInFileName();
                 RaiseEventLog($"Start - Exporting Album '{albumName}'", LogDetailEnum.Verbose);
                 var albumFolder = exportPhotosMainFolder.CreateSubdirectory(albumName);
-                var photosWithDate = photoAlbum.Photos.Where(p => p.Date.HasValue);
+                var photosWithDate = photoAlbum.Photos.Where(p => p.Date.HasValue || forceExport);
                 foreach (var photo in photosWithDate)
                 {
                     i++;
@@ -242,7 +242,7 @@ namespace GoogleTakeoutFixDates
                         newPhotoFile = GetFileNewName(newPhotoFile);
                     }
                     photoFile.CopyTo(newPhotoFile);
-                    ImageExtensions.SaveDateMetadata(newPhotoFile, photo.Date.Value);
+                    ImageExtensions.SaveDateMetadata(newPhotoFile, photo.Date ?? DateTime.Today);
                     RaiseEventLog($"Exported: '{photoFile.Name}' to '{albumFolder.Name}'", LogDetailEnum.Verbose);
                     TotalPhotosExported++;
                 }
